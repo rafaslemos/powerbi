@@ -1,0 +1,18 @@
+let
+    DataInicial = #date(2010,01,01) , //Data Inicial
+    DataFinal = #date(2021,12,31), //Data Final
+    QtdeDias = Duration.Days(DataFinal - DataInicial) + 1, // Contagem dos dias
+    Personalizar1 = List.Dates(DataInicial, QtdeDias, #duration(1,0,0,0)), //Lista com os dias de 01/01/2010 até 31/12/2021
+    #"Convertido para Tabela" = Table.FromList(Personalizar1, Splitter.SplitByNothing(), null, null, ExtraValues.Error), //Convertendo a lista em tabela
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Convertido para Tabela",{{"Column1", type date}}), //Alterando formato dos dados para data
+    #"Colunas Renomeadas" = Table.RenameColumns(#"Tipo Alterado",{{"Column1", "Data"}}), // Alterando nome da coluna
+    #"Ano Inserido" = Table.AddColumn(#"Colunas Renomeadas", "Ano", each Date.Year([Data]), Int64.Type), // Inclusão coluna ano
+    #"Mês Inserido" = Table.AddColumn(#"Ano Inserido", "Mês", each Date.Month([Data]), Int64.Type), // Inclusão coluna mês
+    #"Nome do Mês Inserido" = Table.AddColumn(#"Mês Inserido", "Nome do Mês", each Text.Start(Date.MonthName([Data]),3), type text), // Inclusão coluna nome mês com 3 caracteres
+    #"Coluna Mesclada Inserida" = Table.AddColumn(#"Nome do Mês Inserido", "Mes.Ano", 
+        each Text.Combine({ [Nome do Mês],Text.From([Ano], "pt-BR")}, "."), type text), // Inclusão coluna mês/ano para trabalhar nos eixos dos gráficos
+    #"Personalização Adicionada" = Table.AddColumn(#"Coluna Mesclada Inserida", "Indice Data", 
+        each 12*([Ano]-2010)+[Mês]), // Criação da coluna índice para organizar os meses de forma crescente (video Leonardo Karpinski)
+    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"Indice Data", Int64.Type}}) //Alterando o formato dos dados da coluna para inteiro
+in
+    #"Tipo Alterado1"
